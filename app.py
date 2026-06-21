@@ -9,14 +9,12 @@ from datetime import datetime, date, timedelta
 import bcrypt
 import sys
 
-# แก้ปัญหา Python 3.14 + Werkzeug 2.2.3
+# แก้ปัญหา Python 3.14 + Werkzeug 2.2.3 (เผื่อไว้ใช้)
 if sys.version_info >= (3, 12):
     import ast
     ast.Str = ast.Constant
-from dotenv import load_dotenv
 
-load_dotenv()
-
+# -------------------- Flask App Setup --------------------
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///reports.db'
@@ -28,7 +26,7 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'กรุณาเข้าสู่ระบบก่อนใช้งาน'
 login_manager.login_message_category = 'warning'
 
-# ==================== Models ====================
+# -------------------- Models --------------------
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -70,7 +68,7 @@ class Report(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ==================== Forms ====================
+# -------------------- Forms --------------------
 class ReportForm(FlaskForm):
     report_date = DateField('วันที่', default=date.today, validators=[DataRequired()])
     work_done = TextAreaField('งานที่ทำวันนี้', validators=[DataRequired(), Length(min=5)])
@@ -86,20 +84,21 @@ class EditReportForm(FlaskForm):
     status = SelectField('สถานะ', choices=[('draft', 'ร่าง'), ('submitted', 'ส่งแล้ว'), ('approved', 'อนุมัติ')])
     submit = SubmitField('บันทึก')
 
-# ==================== Routes ====================
+# -------------------- Routes --------------------
 
 @app.route('/')
-@login_required
-def index():
-    if current_user.role == 'manager':
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('report_form'))
+def home():
+    # ถ้ายังไม่ Login ให้ไปหน้า Login ถ้า Login แล้วให้ไป Dashboard หรือ Report Form
+    if current_user.is_authenticated:
+        if current_user.role == 'manager':
+            return redirect(url_for('dashboard'))
+        return redirect(url_for('report_form'))
+    return redirect(url_for('login'))
 
-# -------- Authentication --------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('home'))
     
     if request.method == 'POST':
         username = request.form.get('username')
@@ -109,7 +108,8 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             flash(f'ยินดีต้อนรับ {user.full_name}!', 'success')
-            return redirect(url_for('index'))
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('home'))
         
         flash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'danger')
     
@@ -122,7 +122,6 @@ def logout():
     flash('คุณออกจากระบบเรียบร้อย', 'info')
     return redirect(url_for('login'))
 
-# -------- Employee Routes --------
 @app.route('/report', methods=['GET', 'POST'])
 @login_required
 def report_form():
@@ -184,7 +183,6 @@ def edit_report(report_id):
     
     return render_template('edit_report.html', form=form, report=report)
 
-# -------- Manager Routes --------
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -256,33 +254,39 @@ def delete_report(report_id):
     flash('ลบรายงานเรียบร้อย', 'success')
     return redirect(request.referrer or url_for('dashboard'))
 
-# ==================== Main ====================
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        
-        # สร้างผู้ใช้เริ่มต้น (ถ้ายังไม่มี)
-        if not User.query.first():
-            hashed_pw = bcrypt.hashpw('head123'.encode('utf-8'), bcrypt.gensalt())
-            head = User(username='head', password=hashed_pw, full_name='หัวหน้าทีม', role='manager', department='IT')
-            db.session.add(head)
-            
-            employees = [
-                ('john', 'pass123', 'John Doe', 'Development'),
-                ('jane', 'pass123', 'Jane Smith', 'Design'),
-                ('bob', 'pass123', 'Bob Johnson', 'Development'),
-                ('alice', 'pass123', 'Alice Brown', 'Marketing')
-            ]
-            for emp in employees:
-                hashed = bcrypt.hashpw(emp[1].encode('utf-8'), bcrypt.gensalt())
-                user = User(username=emp[0], password=hashed, full_name=emp[2], role='employee', department=emp[3])
-                db.session.add(user)
-            
-            db.session.commit()
-            print("✅ สร้างผู้ใช้เริ่มต้นเรียบร้อย!")
-            print("📝 หัวหน้า: head / head123")
-            print("📝 ลูกน้อง: john, jane, bob, alice / pass123")
+# -------------------- Database Initialization --------------------
+# โค้ดส่วนนี้จะรันทุกครั้งที่แอพเริ่มต้น (รวมถึงตอนที่ Gunicorn โหลด)
+with app.app_context():
+    print("🔧 กำลังตรวจสอบและสร้างฐานข้อมูล...")
+    db.create_all()
+    print("✅ ตรวจสอบตารางเสร็จสิ้น")
     
-    # ใช้พอร์ตจาก Environment Variable หรือ 10000 ถ้าไม่มี (Render ใช้ 10000)
+    # สร้างผู้ใช้เริ่มต้น (ถ้ายังไม่มี)
+    if not User.query.first():
+        print("👤 กำลังสร้างผู้ใช้เริ่มต้น...")
+        hashed_pw = bcrypt.hashpw('head123'.encode('utf-8'), bcrypt.gensalt())
+        head = User(username='head', password=hashed_pw, full_name='หัวหน้าทีม', role='manager', department='IT')
+        db.session.add(head)
+        
+        employees = [
+            ('john', 'pass123', 'John Doe', 'Development'),
+            ('jane', 'pass123', 'Jane Smith', 'Design'),
+            ('bob', 'pass123', 'Bob Johnson', 'Development'),
+            ('alice', 'pass123', 'Alice Brown', 'Marketing')
+        ]
+        for username, pwd, full_name, dept in employees:
+            hashed = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt())
+            user = User(username=username, password=hashed, full_name=full_name, role='employee', department=dept)
+            db.session.add(user)
+        
+        db.session.commit()
+        print("✅ สร้างผู้ใช้เริ่มต้นเรียบร้อย!")
+        print("📝 หัวหน้า: head / head123")
+        print("📝 ลูกน้อง: john, jane, bob, alice / pass123")
+    else:
+        print(f"✅ พบผู้ใช้ในระบบแล้ว {User.query.count()} คน")
+
+# -------------------- Main --------------------
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(debug=False, host='0.0.0.0', port=port)
