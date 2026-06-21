@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}รายงานทั้งหมด{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+    <h3><i class="bi bi-list-ul"></i> รายงานทั้งหมด</h3>
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> กลับ Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- ตัวกรอง -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="GET" class="row g-2">
+            <div class="col-12 col-sm-6 col-md-3">
+                <select name="employee_id" class="form-select form-select-sm">
+                    <option value="">พนักงานทั้งหมด</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if request.args.get('employee_id')|int == emp.id %}selected{% endif %}>
+                            {{ emp.full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request.args.get('date_from', '') }}">
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request.args.get('date_to', '') }}">
+            </div>
+            <div class="col-6 col-sm-4 col-md-2">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">ทุกสถานะ</option>
+                    <option value="draft" {% if request.args.get('status') == 'draft' %}selected{% endif %}>ร่าง</option>
+                    <option value="submitted" {% if request.args.get('status') == 'submitted' %}selected{% endif %}>รอตรวจ</option>
+                    <option value="approved" {% if request.args.get('status') == 'approved' %}selected{% endif %}>อนุมัติ</option>
+                </select>
+            </div>
+            <div class="col-12 col-sm-4 col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-funnel"></i> ค้นหา
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ตารางรายงาน -->
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 12%;">วันที่</th>
+                <th style="width: 15%;">พนักงาน</th>
+                <th style="width: 38%;">งานที่ทำ</th>
+                <th style="width: 15%;">สถานะ</th>
+                <th style="width: 15%;">จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.report_date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ r.user.full_name }}</td>
+                <td style="white-space: pre-wrap; max-width: 300px;">{{ r.work_done }}</td>
+                <td>
+                    {% if r.status == 'submitted' %}
+                        <span class="badge bg-warning text-dark">รอตรวจ</span>
+                    {% elif r.status == 'approved' %}
+                        <span class="badge bg-success">อนุมัติ</span>
+                    {% else %}
+                        <span class="badge bg-secondary">ร่าง</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('edit_report', report_id=r.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ r.id }})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">ไม่พบรายงาน</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function confirmDelete(id) {
+    if(confirm('คุณแน่ใจว่าต้องการลบรายงานนี้?')) {
+        fetch(`/delete-report/${id}`, { method: 'POST' })
+        .then(() => window.location.reload());
+    }
+}
+</script>
+{% endblock %}
