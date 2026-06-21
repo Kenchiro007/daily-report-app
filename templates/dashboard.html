@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Stats Cards -->
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-file-earmark-text"></i> รายงานทั้งหมด</h5>
+                <h2 class="display-6">{{ total_reports }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-calendar-today"></i> วันนี้</h5>
+                <h2 class="display-6">{{ today_reports }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-people"></i> ลูกน้อง</h5>
+                <h2 class="display-6">{{ user_stats|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-hourglass-split"></i> รอตรวจ</h5>
+                <h2 class="display-6">{{ recent_reports|selectattr('status', 'equalto', 'submitted')|list|length }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Recent Reports -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> รายงานล่าสุด</h5>
+                <a href="{{ url_for('view_all_reports') }}" class="btn btn-sm btn-primary">ดูทั้งหมด</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>พนักงาน</th>
+                                <th>งานที่ทำ</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recent_reports[:10] %}
+                            <tr>
+                                <td>{{ r.report_date.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ r.user.full_name }}</td>
+                                <td style="white-space: pre-wrap; max-width: 250px;">{{ r.work_done }}</td>
+                                <td>
+                                    {% if r.status == 'submitted' %}
+                                        <span class="badge bg-warning text-dark">รอตรวจ</span>
+                                    {% elif r.status == 'approved' %}
+                                        <span class="badge bg-success">อนุมัติ</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">ร่าง</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center">ยังไม่มีรายงาน</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Stats -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> สถิติรายคน</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for stat in user_stats %}
+                        <a href="{{ url_for('view_employee', user_id=stat[0]) }}" class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ stat[1] }}
+                            <span class="badge bg-primary rounded-pill">{{ stat[2] or 0 }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
