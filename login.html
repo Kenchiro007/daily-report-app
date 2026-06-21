@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}เข้าสู่ระบบ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4>เข้าสู่ระบบ</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">ชื่อผู้ใช้</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">รหัสผ่าน</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">เข้าสู่ระบบ</button>
+                </form>
+                <hr>
+                <div class="text-center small">
+                    <p><span class="badge bg-success">หัวหน้า</span> head / head123</p>
+                    <p><span class="badge bg-info">ลูกน้อง</span> john / pass123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

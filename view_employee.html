@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ employee.full_name }} - รายงาน{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3><i class="bi bi-person"></i> {{ employee.full_name }}</h3>
+        <p class="text-muted">{{ employee.department }}</p>
+    </div>
+    <a href="{{ url_for('view_all_reports') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> กลับ
+    </a>
+</div>
+
+<div class="row">
+    {% for report in reports %}
+    <div class="col-12 col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                {{ report.report_date.strftime('%d/%m/%Y') }}
+                <span class="float-end">
+                    {% if report.status == 'submitted' %}
+                        <span class="badge bg-warning text-dark">รอตรวจ</span>
+                    {% elif report.status == 'approved' %}
+                        <span class="badge bg-success">อนุมัติ</span>
+                    {% else %}
+                        <span class="badge bg-secondary">ร่าง</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <p><strong>📋 งานที่ทำ:</strong></p>
+                <p style="white-space: pre-wrap;">{{ report.work_done }}</p>
+                {% if report.issues %}
+                    <p><strong>⚠️ ปัญหา:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ report.issues }}</p>
+                {% endif %}
+                {% if report.plan_tomorrow %}
+                    <p><strong>📌 แผนพรุ่งนี้:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ report.plan_tomorrow }}</p>
+                {% endif %}
+                <p class="text-muted small">ส่งเมื่อ: {{ report.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('edit_report', report_id=report.id) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil"></i> แก้ไข
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">พนักงานคนนี้ยังไม่มีรายงาน</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
