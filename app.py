@@ -1,4 +1,4 @@
-import os  # เพิ่มบรรทัดนี้!
+import os
 from flask import Flask, render_template, request, redirect, url_for, flash, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -7,7 +7,12 @@ from wtforms import StringField, TextAreaField, SelectField, DateField, SubmitFi
 from wtforms.validators import DataRequired, Length
 from datetime import datetime, date, timedelta
 import bcrypt
-import os
+import sys
+
+# แก้ปัญหา Python 3.14 + Werkzeug 2.2.3
+if sys.version_info >= (3, 12):
+    import ast
+    ast.Str = ast.Constant
 from dotenv import load_dotenv
 
 load_dotenv()
