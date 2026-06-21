@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}รายงานของฉัน{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3><i class="bi bi-file-text"></i> รายงานของฉัน</h3>
+    <a href="{{ url_for('report_form') }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> ส่งรายงานใหม่
+    </a>
+</div>
+
+<div class="row">
+    {% for report in reports %}
+    <div class="col-12 col-md-6 col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>{{ report.report_date.strftime('%d/%m/%Y') }}</span>
+                <span>
+                    {% if report.status == 'submitted' %}
+                        <span class="badge bg-warning text-dark">รอตรวจ</span>
+                    {% elif report.status == 'approved' %}
+                        <span class="badge bg-success">อนุมัติ</span>
+                    {% else %}
+                        <span class="badge bg-secondary">ร่าง</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                <p><strong>📋 งานที่ทำ:</strong></p>
+                <p style="white-space: pre-wrap;">{{ report.work_done }}</p>
+                {% if report.issues %}
+                    <p><strong>⚠️ ปัญหา:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ report.issues }}</p>
+                {% endif %}
+                {% if report.plan_tomorrow %}
+                    <p><strong>📌 แผนพรุ่งนี้:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ report.plan_tomorrow }}</p>
+                {% endif %}
+                <p class="text-muted small">ส่งเมื่อ: {{ report.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('edit_report', report_id=report.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i> แก้ไข
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i> คุณยังไม่มีรายงาน
+            <br><a href="{{ url_for('report_form') }}">คลิกที่นี่เพื่อส่งรายงาน</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
