@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}แก้ไขรายงาน{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> แก้ไขรายงาน</h4>
+                <small>รายงานวันที่ {{ report.report_date.strftime('%d/%m/%Y') }}</small>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.report_date.label(class="form-label fw-bold") }}
+                        {{ form.report_date(class="form-control", type="date") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.work_done.label(class="form-label fw-bold") }}
+                        <span class="text-danger">*</span>
+                        {{ form.work_done(class="form-control", rows=5, style="white-space: pre-wrap;") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.issues.label(class="form-label fw-bold") }}
+                        {{ form.issues(class="form-control", rows=3, style="white-space: pre-wrap;") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.plan_tomorrow.label(class="form-label fw-bold") }}
+                        {{ form.plan_tomorrow(class="form-control", rows=3, style="white-space: pre-wrap;") }}
+                    </div>
+                    
+                    {% if current_user.role == 'manager' %}
+                    <div class="mb-3">
+                        {{ form.status.label(class="form-label fw-bold") }}
+                        {{ form.status(class="form-select") }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('my_reports' if current_user.role == 'employee' else 'view_employee', user_id=report.user_id) }}" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> ยกเลิก
+                        </a>
+                        {{ form.submit(class="btn btn-primary btn-lg px-5") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
