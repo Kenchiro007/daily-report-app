@@ -1,3 +1,4 @@
+import os  # เพิ่มบรรทัดนี้!
 from flask import Flask, render_template, request, redirect, url_for, flash, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -277,4 +278,6 @@ if __name__ == '__main__':
             print("📝 หัวหน้า: head / head123")
             print("📝 ลูกน้อง: john, jane, bob, alice / pass123")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # ใช้พอร์ตจาก Environment Variable หรือ 10000 ถ้าไม่มี (Render ใช้ 10000)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(debug=False, host='0.0.0.0', port=port)
